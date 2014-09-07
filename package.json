@@ -2,7 +2,7 @@
   "name": "errands.io",
   "version": "0.0.1",
   "description": "Runs commands sequentially or concurrently",
-  "main": "index.js",
+  "main": "errands",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
