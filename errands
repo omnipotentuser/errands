@@ -1,9 +1,42 @@
 #!/usr/bin/env node
 
-var argv = require('yargs').argv;
+var argv = require('yargs')
+  .usage('Usage: $0 [-haqf] [command1,...]')
+  .argv
+;
 
-if (argv.riff - 5 * argv.xup > 7.138){
-  console.log("Plunder more riffiwobbles!");
-} else {
-  console.log("Drop the xupptumblers!");
+var exec = require('child_process').exec,
+    child;
+
+var nl = '\n';
+
+if ((argv.h || argv.help) && argv._.length === 0){
+  var menu = 'Help Menu\n';
+  var help = '\t-h help - prints help screen.\n';
+  var async = '\t-a asynchronous mode - executes all commands concurrently.\n';
+  var quiet = '\t-q quiet - do not print output.\n';
+  var fail = '\t-f fail - stop on fail. synchronous operation only.\n';
+  console.log(nl, nl, menu, nl, help, async, quiet, fail, nl);
+  return;
 }
+
+if (argv.a){
+  var _ = argv._;
+  console.log(_);
+  _.forEach( function(value, index, arr){
+    //console.log('\nindex:',index,'value:',value);
+    child = exec(value, function( err, stdout, stderr ){
+      if (stdout){
+        console.log(stdout);
+      }
+      if (stderr){
+        console.log(nl,'stderr >',stderr);
+      }
+      if (err !== null){
+        console.log('\"'+value+'\"', 'exec error:', err);
+      }
+    });
+  });
+}
+
+console.log(nl);
