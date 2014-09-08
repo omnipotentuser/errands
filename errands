@@ -19,18 +19,34 @@ var nl = '\n';
 function print(command, stdout, stderr, err){
   if (typeof(argv.q) === 'undefined'){
     if (command){
-      console.log(command);
+      console.log('\t',command);
     }
     if (stdout){
-      console.log(stdout);
+      console.log('\t',stdout);
     }
     if (stderr){
       console.log(nl,'stderr >',stderr);
+      if (err && (err === stderr)){
+        process.exit(1);
+      }
     }
     if (err !== null){
-      console.log('\"'+value+'\"', 'exec error:', err);
+      console.log('\texec error:', err.code, err.signal);
     }
   }
+};
+
+function next(cmd){
+  child = exec( cmd, function(err, stdout, stderr){
+    print(cmd, stdout, stderr, err);
+    if (argv._.length > 0){
+      if (argv.f && (stderr !== null || err !== null)){
+        process.exit(1);
+      }
+      var cmd = argv._.shift();
+      next(cmd);
+    }
+  });
 };
 
 if ((argv.h) || argv._.length === 0){
@@ -45,13 +61,18 @@ if ((argv.h) || argv._.length === 0){
 
 if (argv.a){
   var _ = argv._;
-  console.log(_);
+  console.log('>>>>', _);
   _.forEach( function(value, index, arr){
     //console.log('\nindex:',index,'value:',value);
     child = exec(value, function( err, stdout, stderr ){
       print(value, stdout, stderr, err);
     });
   });
+} else {
+  if (argv._.length > 0){
+    var cmd = argv._.shift();
+    next(cmd);
+  }
 }
 
 console.log(nl);
