@@ -5,14 +5,25 @@ errands.io
 
 Runs a list of console tools and prints result of each tool either asynchronously or synchronously
 
-Relies on github.com/chevex/yargs and Nodejs's process module.
-
-yargs extracts the command line args.
+Relies on github.com/chevex/yargs and Nodejs's process and child_process package.
 
 args:
-> -h = help
-> -a = async // sequentially by default
-> -q = quiet
-> -f = stop on fail. In other words, Sepquential only. By default, does not fail if at least one proc aborts.
+> -h  Help manu.
+
+> -a  Asynchronous handling of commands. Runs sequentially by default.
+
+> -q  Runs commands silently.
+
+> -f  Child process returns error causing errands to abort immediately. Does not affect asynchronous operation.
 list output from file descriptor stdout per proc
-> if a proc failed, print err desc at outcome sync or async
+
+if a proc failed, print err desc at outcome sync or async
+
+example
+-------
+
+`./errands -h  // prints the menu`
+
+`./errands -f bogus 'ps aux'  // exits at bogus`
+
+`./errands -a 'sleep 2' 'echo wake up!' w  // sleeps for 2 seconds, echo wake up! and runs w all asynchronously`
