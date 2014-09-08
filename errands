@@ -2,6 +2,12 @@
 
 var argv = require('yargs')
   .usage('Usage: $0 [-haqf] [command1,...]')
+  .example('$0 "killall top" "ps aux"', 'runs "killall top" then ps in a sequential order')
+  .describe('q','Quiet. Silently runs commands without returning result')
+  .describe('a','Asynchronous mode. Executes all commands concurrently.')
+  .describe('f','Fail. Stop on fail. Synchronous only.')
+  .alias('h','help')
+  .alias('h','?')
   .argv
 ;
 
@@ -10,7 +16,24 @@ var exec = require('child_process').exec,
 
 var nl = '\n';
 
-if ((argv.h || argv.help) && argv._.length === 0){
+function print(command, stdout, stderr, err){
+  if (typeof(argv.q) === 'undefined'){
+    if (command){
+      console.log(command);
+    }
+    if (stdout){
+      console.log(stdout);
+    }
+    if (stderr){
+      console.log(nl,'stderr >',stderr);
+    }
+    if (err !== null){
+      console.log('\"'+value+'\"', 'exec error:', err);
+    }
+  }
+};
+
+if ((argv.h) || argv._.length === 0){
   var menu = 'Help Menu\n';
   var help = '\t-h help - prints help screen.\n';
   var async = '\t-a asynchronous mode - executes all commands concurrently.\n';
@@ -26,15 +49,7 @@ if (argv.a){
   _.forEach( function(value, index, arr){
     //console.log('\nindex:',index,'value:',value);
     child = exec(value, function( err, stdout, stderr ){
-      if (stdout){
-        console.log(stdout);
-      }
-      if (stderr){
-        console.log(nl,'stderr >',stderr);
-      }
-      if (err !== null){
-        console.log('\"'+value+'\"', 'exec error:', err);
-      }
+      print(value, stdout, stderr, err);
     });
   });
 }
