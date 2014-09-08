@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+
+var child;
+var exec = require('child_process').exec;
 var argv = require('yargs')
   .usage('Usage: $0 [-haqf] [command1,...]')
   .example('$0 "killall top" "ps aux"', 'runs "killall top" then ps in a sequential order')
@@ -8,49 +11,53 @@ var argv = require('yargs')
   .describe('f','Fail. Stop on fail. Synchronous only.')
   .alias('h','help')
   .alias('h','?')
+  .boolean(['f','h','q','a'])
   .argv
 ;
 
-var exec = require('child_process').exec,
-    child;
+//console.dir([argv.f, argv.h, argv.q, argv.a]);
+//console.dir(argv._);
 
 var nl = '\n';
 
-function print(command, stdout, stderr, err){
-  if (typeof(argv.q) === 'undefined'){
-    if (command){
-      console.log('"'+command+'"');
+// params carries 4 values
+// 0 = err
+// 1 = output
+// 2 = stderr
+// 3 = name of command
+function print(params){
+  if (argv.q === false){
+    if (params[3]){
+      console.log('"'+params[3]+'"');
     }
-    if (stdout){
-      console.log(stdout);
+    if (params[1]){
+      console.log(params[1]);
     }
-    if (stderr){
-      console.log(nl,'stderr >',stderr);
-      if (err && (err === stderr)){
-        process.exit(1);
-      }
+    if (params[2]){
+      console.log('stderr >',params[2]);
     }
-    if (err !== null){
-      console.log('\texec error:', err.code, err.signal);
+    if (params[0] !== null){
+      console.dir(['exec error:', params[0].code, params[0].signal]);
+    }
+    if (argv.f  && (params[0] || params[2])){
+      console.log('stderr >',params[2]);
+      console.log(params[3],'failed!');
+      process.exit(1);
     }
   }
 };
-
 function next(cmd){
-  child = exec( cmd, function(err, stdout, stderr){
-    (function(command){
-      print(command, stdout, stderr, err);
+  child = exec(cmd, function(err, stdout, stderr){
+    var params = [err, stdout, stderr, cmd];
+    (function(p){
+      print(p);
       if (argv._.length > 0){
-        if (argv.f && (stderr !== null || err !== null)){
-          process.exit(1);
-        }
         var cmd = argv._.shift();
         next(cmd);
       }
-    })(cmd);
+    })(params);
   });
 };
-
 if ((argv.h) || argv._.length === 0){
   var menu = 'Help Menu\n';
   var help = '\t-h help - prints help screen.\n';
@@ -58,15 +65,14 @@ if ((argv.h) || argv._.length === 0){
   var quiet = '\t-q quiet - do not print output.\n';
   var fail = '\t-f fail - stop on fail. synchronous operation only.\n';
   console.log(nl, nl, menu, nl, help, async, quiet, fail, nl);
-  return;
+  process.exit(2); 
 }
-
 if (argv.a){
   var _ = argv._;
   _.forEach( function(value, index, arr){
     //console.log('\nindex:',index,'value:',value);
     child = exec(value, function( err, stdout, stderr ){
-      print(value, stdout, stderr, err);
+      print([err, stdout, stderr, value]);
     });
   });
 } else {
@@ -75,5 +81,4 @@ if (argv.a){
     next(cmd);
   }
 }
-
 console.log(nl);
